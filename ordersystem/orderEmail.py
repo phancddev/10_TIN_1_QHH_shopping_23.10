@@ -72,7 +72,7 @@ def process_orders():
         # Kiểm tra đơn hàng mới (chưa có trong danh sách cũ)
         if email not in previous_orders:
             # Gửi email đơn hàng mới (bao gồm Dấu thời gian)
-            subject = f"Đơn hàng của {name} tại 10 TIN 1 Quốc Học Huế đã được ghi nhận."
+            subject = f"Đơn hàng của {name} tại 10 TIN 1 QUỐC HỌC HUẾ đã được ghi nhận."
             body = f"""Cảm ơn quý khách đã đặt hàng tại 10 TIN 1.
 Đơn đặt hàng của quý đã được chúng tôi ghi nhận gồm: {order_details}
 Đơn hàng được tự động ghi nhận vào lúc {timestamp}.
@@ -86,29 +86,44 @@ Nếu có bất kì thắc mắc nào xin hãy gọi đến:
 
         # Kiểm tra và gửi email khi đã xác nhận đơn
         if confirm_status.lower() == 'x' and not previous_orders[email]['confirmed']:
-            subject = f"Đơn hàng của {name} tại 10 TIN 1 đã được xác nhận"
-            body = f"Chúng tôi đã xác nhận đơn đặt hàng của quý khách, chúng tôi sẽ thông báo khi đơn hàng bắt đầu được giao đến quý khách."
+            subject = f"Đơn hàng của {name} tại 10 TIN 1 QUỐC HỌC HUẾ đã được xác nhận"
+            body = f"Chúng tôi đã xác nhận đơn đặt hàng của quý khách, chúng tôi sẽ thông báo khi đơn hàng bắt đầu được giao đến quý khách.
+            Nếu có bất kì thắc mắc nào xin hãy gọi đến:
+            0834729504 (Khánh Trang)
+            0848829738 (Phú Hùng)"
             send_email(subject, body, email)
             previous_orders[email]['confirmed'] = True
 
         # Kiểm tra và gửi email khi đơn hàng đang giao
         if shipping_status.lower() == 'x' and not previous_orders[email]['shipping']:
             subject = f"Đơn hàng của quý khách {name} đang được giao."
-            body = f"Đơn hàng của quý khách vừa hoàn thành và đang được giao đến tay quý khách. Xin cảm ơn quý khách!"
+            body = f"Đơn hàng của quý khách vừa hoàn thành và đang được giao đến tay quý khách. Xin cảm ơn quý khách!
+            Nếu có bất kì thắc mắc nào xin hãy gọi đến:
+            0834729504 (Khánh Trang)
+            0848829738 (Phú Hùng)
+            "
             send_email(subject, body, email)
             previous_orders[email]['shipping'] = True
 
         # Kiểm tra và gửi email khi đơn hàng đã giao
         if delivery_status.lower() == 'x' and not previous_orders[email]['delivered']:
-            subject = f"Đơn hàng của quý khách {name} đã được giao."
-            body = f"Đơn hàng của quý khách đã được giao đến tay. Xin cảm ơn!"
+            subject = f"Đơn hàng của quý khách {name} tại 10 TIN 1 QUỐC HỌC HUẾ đã được giao."
+            body = f"Đơn hàng của quý khách đã được giao đến tay. Xin cảm ơn!
+            Nếu có bất kì thắc mắc nào xin hãy gọi đến:
+            0834729504 (Khánh Trang)
+            0848829738 (Phú Hùng)"
+
             send_email(subject, body, email)
             previous_orders[email]['delivered'] = True
 
         # Kiểm tra và gửi email khi đơn hàng bị huỷ
         if cancel_status.lower() == 'x' and not previous_orders[email]['cancelled']:
-            subject = f"Đơn hàng của bạn đặt tại 10 TIN 1 Quốc Học Huế vào lúc {timestamp} đã bị huỷ"
-            body = f"Đơn hàng của bạn đặt vào lúc {timestamp} đã bị huỷ, chúng tôi vô cùng xin lỗi."
+            subject = f"Đơn hàng của bạn đặt tại 10 TIN 1 QUỐC HỌC HUẾ vào lúc {timestamp} đã bị huỷ"
+            body = f"Đơn hàng của bạn đặt vào lúc {timestamp} đã bị huỷ, chúng tôi vô cùng xin lỗi.
+            Nếu có bất kì thắc mắc nào xin hãy gọi đến:
+            0834729504 (Khánh Trang)
+            0848829738 (Phú Hùng)
+            "
             send_email(subject, body, email)
             previous_orders[email]['cancelled'] = True
 
@@ -117,5 +132,5 @@ if __name__ == '__main__':
     while True:
         print("Kiểm tra Google Sheet...")
         process_orders()
-        print("Chờ 1 phút để kiểm tra tiếp...")
-        time.sleep(60)  # Chờ 1 phút trước khi kiểm tra tiếp
+        print("Chờ 20 giây phút để kiểm tra tiếp...")
+        time.sleep(20)  # Chờ 1 phút trước khi kiểm tra tiếp
