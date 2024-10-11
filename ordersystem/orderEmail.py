@@ -53,7 +53,7 @@ def process_orders():
     # Bỏ qua hàng tiêu đề
     for i, row in enumerate(rows[1:], start=2):
         # Chỉ lấy các cột cần thiết
-        timestamp = row[0] if len(row) > 0 else ''
+        timestamp = row[0] if len(row) > 0 else ''  # Cột "Dấu thời gian"
         score = row[1] if len(row) > 1 else ''
         name = row[2] if len(row) > 2 else ''
         email = row[3] if len(row) > 3 else ''
@@ -63,24 +63,26 @@ def process_orders():
         order_details = row[7] if len(row) > 7 else ''
         notes = row[8] if len(row) > 8 else ''
         
-        # Lấy trạng thái "Đã xác nhận đơn", "Đang giao" và "Đã giao"
+        # Lấy trạng thái "Đã xác nhận đơn", "Đang giao", "Đã giao", và "Đã huỷ"
         confirm_status = row[9] if len(row) > 9 else ''
         shipping_status = row[10] if len(row) > 10 else ''  # Cột "Đang Giao"
         delivery_status = row[11] if len(row) > 11 else ''  # Cột "Đã Giao"
+        cancel_status = row[12] if len(row) > 12 else ''  # Cột "Đã Huỷ"
         
         # Kiểm tra đơn hàng mới (chưa có trong danh sách cũ)
         if email not in previous_orders:
-            # Gửi email đơn hàng mới
+            # Gửi email đơn hàng mới (bao gồm Dấu thời gian)
             subject = f"Đơn hàng của {name} tại 10 TIN 1 Quốc Học Huế đã được ghi nhận."
             body = f"""Cảm ơn quý khách đã đặt hàng tại 10 TIN 1.
 Đơn đặt hàng của quý đã được chúng tôi ghi nhận gồm: {order_details}
+Đơn hàng được tự động ghi nhận vào lúc {timestamp}.
 Chúng tôi sẽ gọi cho quý khách để xác nhận sau ít phút nữa, quý khách vui lòng giữ máy.
 Nếu có bất kì thắc mắc nào xin hãy gọi đến:
 0834729504 (Khánh Trang)
 0848829738 (Phú Hùng)"""
             
             send_email(subject, body, email)
-            previous_orders[email] = {'confirmed': False, 'shipping': False, 'delivered': False}
+            previous_orders[email] = {'confirmed': False, 'shipping': False, 'delivered': False, 'cancelled': False}
 
         # Kiểm tra và gửi email khi đã xác nhận đơn
         if confirm_status.lower() == 'x' and not previous_orders[email]['confirmed']:
@@ -103,10 +105,17 @@ Nếu có bất kì thắc mắc nào xin hãy gọi đến:
             send_email(subject, body, email)
             previous_orders[email]['delivered'] = True
 
+        # Kiểm tra và gửi email khi đơn hàng bị huỷ
+        if cancel_status.lower() == 'x' and not previous_orders[email]['cancelled']:
+            subject = f"Đơn hàng của bạn đặt tại 10 TIN 1 Quốc Học Huế vào lúc {timestamp} đã bị huỷ"
+            body = f"Đơn hàng của bạn đặt vào lúc {timestamp} đã bị huỷ, chúng tôi vô cùng xin lỗi."
+            send_email(subject, body, email)
+            previous_orders[email]['cancelled'] = True
+
 # Chạy tool với chu kỳ 1 phút
 if __name__ == '__main__':
     while True:
         print("Kiểm tra Google Sheet...")
         process_orders()
         print("Chờ 1 phút để kiểm tra tiếp...")
-        time.sleep(10)  # Chờ 1 phút trước khi kiểm tra tiếp
+        time.sleep(60)  # Chờ 1 phút trước khi kiểm tra tiếp
