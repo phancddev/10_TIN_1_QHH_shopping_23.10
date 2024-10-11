@@ -26,15 +26,23 @@ service = build('sheets', 'v4', credentials=creds)
 previous_orders = {}
 
 # Hàm gửi email
+# Hàm gửi email
 def send_email(subject, body, to_email):
-    msg = MIMEText(body)
-    msg['Subject'] = subject
-    msg['From'] = SMTP_USER
-    msg['To'] = to_email
+    if '@' in to_email and '.' in to_email:  # Kiểm tra xem email có hợp lệ không
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From'] = SMTP_USER
+        msg['To'] = to_email
 
-    with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
-        server.login(SMTP_USER, SMTP_PASSWORD)
-        server.sendmail(SMTP_USER, to_email, msg.as_string())
+        try:
+            with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
+                server.login(SMTP_USER, SMTP_PASSWORD)
+                server.sendmail(SMTP_USER, to_email, msg.as_string())
+        except Exception as e:
+            print(f"Lỗi khi gửi email đến {to_email}: {e}")
+    else:
+        print(f"Bỏ qua email không hợp lệ: {to_email}")
+
 
 # Hàm lấy dữ liệu từ Google Sheet
 def get_google_sheet_data():
@@ -70,11 +78,11 @@ def process_orders():
         cancel_status = row[12] if len(row) > 12 else ''  # Cột "Đã Huỷ"
         
         # Kiểm tra đơn hàng mới (chưa có trong danh sách cũ)
-        if email not in previous_orders:
+        if email and email not in previous_orders:
             # Gửi email đơn hàng mới (bao gồm Dấu thời gian)
             subject = f"Đơn hàng của {name} tại 10 TIN 1 QUỐC HỌC HUẾ đã được ghi nhận."
             body = f"""Cảm ơn quý khách đã đặt hàng tại 10 TIN 1.
-Đơn đặt hàng của quý đã được chúng tôi ghi nhận gồm: {order_details}
+Đơn đặt hàng của quý khách gồm: {order_details}
 Đơn hàng được tự động ghi nhận vào lúc {timestamp}.
 Chúng tôi sẽ gọi cho quý khách để xác nhận sau ít phút nữa, quý khách vui lòng giữ máy.
 Nếu có bất kì thắc mắc nào xin hãy gọi đến:
@@ -85,45 +93,46 @@ Nếu có bất kì thắc mắc nào xin hãy gọi đến:
             previous_orders[email] = {'confirmed': False, 'shipping': False, 'delivered': False, 'cancelled': False}
 
         # Kiểm tra và gửi email khi đã xác nhận đơn
-        if confirm_status.lower() == 'x' and not previous_orders[email]['confirmed']:
+        if email and confirm_status.lower() == 'x' and not previous_orders[email]['confirmed']:
             subject = f"Đơn hàng của {name} tại 10 TIN 1 QUỐC HỌC HUẾ đã được xác nhận"
-            body = f"Chúng tôi đã xác nhận đơn đặt hàng của quý khách, chúng tôi sẽ thông báo khi đơn hàng bắt đầu được giao đến quý khách.
-            Nếu có bất kì thắc mắc nào xin hãy gọi đến:
-            0834729504 (Khánh Trang)
-            0848829738 (Phú Hùng)"
+            body = f"""Chúng tôi đã xác nhận đơn đặt hàng của quý khách, chúng tôi sẽ thông báo khi đơn hàng bắt đầu được giao đến quý khách.
+Nếu có bất kì thắc mắc nào xin hãy gọi đến:
+0834729504 (Khánh Trang)
+0848829738 (Phú Hùng)"""
+            
             send_email(subject, body, email)
             previous_orders[email]['confirmed'] = True
 
         # Kiểm tra và gửi email khi đơn hàng đang giao
-        if shipping_status.lower() == 'x' and not previous_orders[email]['shipping']:
+        if email and shipping_status.lower() == 'x' and not previous_orders[email]['shipping']:
             subject = f"Đơn hàng của quý khách {name} đang được giao."
-            body = f"Đơn hàng của quý khách vừa hoàn thành và đang được giao đến tay quý khách. Xin cảm ơn quý khách!
-            Nếu có bất kì thắc mắc nào xin hãy gọi đến:
-            0834729504 (Khánh Trang)
-            0848829738 (Phú Hùng)
-            "
+            body = f"""Đơn hàng của quý khách vừa hoàn thành và đang được giao đến tay quý khách. Xin cảm ơn quý khách!
+Nếu có bất kì thắc mắc nào xin hãy gọi đến:
+0834729504 (Khánh Trang)
+0848829738 (Phú Hùng)"""
+            
             send_email(subject, body, email)
             previous_orders[email]['shipping'] = True
 
         # Kiểm tra và gửi email khi đơn hàng đã giao
-        if delivery_status.lower() == 'x' and not previous_orders[email]['delivered']:
+        if email and delivery_status.lower() == 'x' and not previous_orders[email]['delivered']:
             subject = f"Đơn hàng của quý khách {name} tại 10 TIN 1 QUỐC HỌC HUẾ đã được giao."
-            body = f"Đơn hàng của quý khách đã được giao đến tay. Xin cảm ơn!
-            Nếu có bất kì thắc mắc nào xin hãy gọi đến:
-            0834729504 (Khánh Trang)
-            0848829738 (Phú Hùng)"
-
+            body = f"""Đơn hàng của quý khách đã được giao đến tay. Xin cảm ơn!
+Nếu có bất kì thắc mắc nào xin hãy gọi đến:
+0834729504 (Khánh Trang)
+0848829738 (Phú Hùng)"""
+            
             send_email(subject, body, email)
             previous_orders[email]['delivered'] = True
 
         # Kiểm tra và gửi email khi đơn hàng bị huỷ
-        if cancel_status.lower() == 'x' and not previous_orders[email]['cancelled']:
+        if email and cancel_status.lower() == 'x' and not previous_orders[email]['cancelled']:
             subject = f"Đơn hàng của bạn đặt tại 10 TIN 1 QUỐC HỌC HUẾ vào lúc {timestamp} đã bị huỷ"
-            body = f"Đơn hàng của bạn đặt vào lúc {timestamp} đã bị huỷ, chúng tôi vô cùng xin lỗi.
-            Nếu có bất kì thắc mắc nào xin hãy gọi đến:
-            0834729504 (Khánh Trang)
-            0848829738 (Phú Hùng)
-            "
+            body = f"""Đơn hàng của bạn đặt vào lúc {timestamp} đã bị huỷ, chúng tôi vô cùng xin lỗi.
+Nếu có bất kì thắc mắc nào xin hãy gọi đến:
+0834729504 (Khánh Trang)
+0848829738 (Phú Hùng)"""
+            
             send_email(subject, body, email)
             previous_orders[email]['cancelled'] = True
 
